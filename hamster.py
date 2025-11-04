@@ -2,26 +2,25 @@ import re
 import math
 from roboid import *
 
-# HamsterS 로봇 연결 및 설정
-h = HamsterS() # <-- 로봇 객체 활성화 (연결 확인 필요!)
-SCALE = 0.06 # 1 SVG 단위 = 4 cm
 
-# --- SVG Path (사다리꼴 경로 예시) ---
+h = HamsterS() 
+SCALE = 0.06 # 간단 확인 : 0.03 / 테스트용 : 0.06
 path_d = "M261.83,204.9H12.06c-6.55,0-11.32-6.19-9.66-12.53L36.43,63.02c2.36-8.95,10.45-15.19,19.71-15.19h167.71c9.26,0,17.35,6.24,19.71,15.19l32.48,123.46c2.45,9.32-4.58,18.43-14.21,18.43Z"
 
 # --- SVG Path 해석 함수 (직선 세그먼트 일반화 및 상대 좌표 처리) ---
 def extract_points(path_d):
     tokens = re.findall(r'([MLHVZCcmlhvzc])([^MLHVZCcmlhvzc]*)', path_d)
-    points = []
-    current_pos = (0.0, 0.0)
-    start_pos = (0.0, 0.0)
+    points = [] # 경로 상의 점들 저장
+    current_pos = (0.0, 0.0) # 현재 로봇의 위치
+    start_pos = (0.0, 0.0) # 경로의 시작점
 
-    for cmd, vals in tokens:
-        cmd_upper = cmd.upper()
-        is_relative = cmd == cmd.lower()
-        vals = vals.strip()
+    for cmd, vals in tokens:  # 각 명령과 좌표 처리
+        cmd_upper = cmd.upper()  # 명령어를 대문자로 바꿔서 처리 (대소문자 구분)
+        is_relative = cmd == cmd.lower() # 소문자는 상대좌표, 대문자는 절대좌표
+        vals = vals.strip() # 좌표 부분에서 공백 제거
         coords = list(map(float, re.findall(r'-?\d+\.?\d*', vals)))
         
+        # 상대 좌표를 처리 시 기준이 될 위치 (이전 위치 사용)
         base_x, base_y = current_pos if is_relative and cmd_upper != 'M' else (0.0, 0.0)
 
         if cmd_upper in ['M', 'L']:
@@ -29,7 +28,7 @@ def extract_points(path_d):
                 x = base_x + coords[i]
                 y = base_y + coords[i+1]
                 
-                new_pos = (x, -y) # Y축 반전 적용
+                new_pos = (x, -y) # Y축 반전 적용(로봇은 Y축이 반전돼서 그려져야 해서 Y값을 -로 바꿈)
                 
                 if cmd_upper == 'M' and i == 0:
                     start_pos = new_pos 
@@ -37,15 +36,15 @@ def extract_points(path_d):
                 elif cmd_upper == 'L' or (cmd_upper == 'M' and i > 0):
                     points.append(new_pos)
                 
-                current_pos = new_pos
+                current_pos = new_pos # 현재 위치를 업데이트
 
-        elif cmd_upper == 'H':
+        elif cmd_upper == 'H': # 수평 직선 이동
             for val in coords:
                 x = base_x + val if is_relative else val
                 current_pos = (x, current_pos[1]) 
                 points.append(current_pos)
 
-        elif cmd_upper == 'V':
+        elif cmd_upper == 'V': # 수직 직선 이동
             for val in coords:
                 y_svg = current_pos[1] if not is_relative else 0
                 y = y_svg + (-val) if is_relative else -val # 로봇 Y = -SVG Y
@@ -63,7 +62,7 @@ def extract_points(path_d):
             
     return points
 
-# --- 절대 방향 기준 상대 회전 계산 함수 ---
+#  절대 방향 기준 상대 회전 계산 함수
 def turn_to_direction(current_angle, target_vec):
     target_angle = math.degrees(math.atan2(target_vec[1], target_vec[0]))
     delta_angle = target_angle - current_angle
@@ -76,7 +75,7 @@ def turn_to_direction(current_angle, target_vec):
     return delta_angle, target_angle
 
 # -------------------------------------------------------------------
-## 🏃‍♂️ 햄스터 로봇 실행 로직 (동작 활성화)
+## 🐹햄스터🐹 실행 로직 (동작 활성화)
 # -------------------------------------------------------------------
 
 # 1. 포인트 추출
@@ -87,7 +86,7 @@ current_angle = 0 # 햄스터 초기 방향: x축(0도) 기준
 if len(points) < 2:
     print("경로를 따라 이동할 포인트가 부족합니다.")
 else:
-    print(f"**로봇 동작 시작** (SCALE={SCALE})")
+    print(f"로봇 동작 시작 (SCALE={SCALE})")
     print("-" * 40)
     
     for i in range(1, len(points)):
@@ -119,4 +118,4 @@ else:
             print(f"[{i}단계] 이동: {distance:.2f} cm ({distance_svg:.1f} SVG units)")
 
     print("-" * 40)
-    print(f"**로봇 동작 완료!** 최종 방향: {current_angle:.2f}도")
+    print(f"동작 완료. 최종 방향: {current_angle:.2f}도")
