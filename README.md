@@ -20,8 +20,8 @@
 - move_to() 함수로 로봇의 전진(move_forward) 및 회전(turn_left / turn_right)을 제어하며, execute_path()는 SVG에서 파싱된 경로를 순차적으로 읽어 로봇이 실제로 그리게 합니다.
 - Bezier 곡선, 원호(Arc), 원(circle) 등 다양한 도형을 점 단위 이동 경로로 근사하여 실행합니다.
 
-## 🐹 hamster.py
+# hamster.py
 
 - 프로젝트의 메인 실행 스크립트입니다.
 - parse_svg()를 통해 SVG 파일(Mouse.svg)을 파싱한 후, execute_path()를 호출하여 로봇이 실제 경로를 따라 움직이게 합니다.
-- Hamster 로봇 객체를 초기화하고, 보정값(ANGLE_OFFSET)을 설정합니다.
+- Turtle 로봇 객체를 초기화하고, 보정값(ANGLE_OFFSET)을 설정합니다.
